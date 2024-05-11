@@ -39,7 +39,7 @@ Engine::Point PlayScene::GetClientSize() {
 	return Engine::Point(MapWidth * BlockSize, MapHeight * BlockSize);
 }
 void PlayScene::Initialize() {
-	// TODO: [HACKATHON-3-BUG] (1/5): There's a bug in this file, which crashes the game when you lose. Try to find it.
+	// DONE TODO: [HACKATHON-3-BUG] (1/5): There's a bug in this file, which crashes the game when you lose. Try to find it.
 	// TODO: [HACKATHON-3-BUG] (2/5): Find out the cheat code to test.
     // TODO: [HACKATHON-3-BUG] (2/5): It should generate a Plane, and add 10000 to the money, but it doesn't work now.
 	mapState.clear();
@@ -73,6 +73,7 @@ void PlayScene::Initialize() {
 	// Start BGM.
 	bgmId = AudioHelper::PlayBGM("play.ogg");
 }
+
 void PlayScene::Terminate() {
 	AudioHelper::StopBGM(bgmId);
 	AudioHelper::StopSample(deathBGMInstance);
@@ -224,7 +225,7 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
 			if (!preview)
 				return;
 			// Check if valid.
-			if (!CheckSpaceValid(x, y)) {
+			if (CheckSpaceValid(x, y)) { // (!CheckSpaceValid(x,y)) removed ! for now since pathfinding is not set yet
 				Engine::Sprite* sprite;
 				GroundEffectGroup->AddNewObject(sprite = new DirtyEffect("play/target-invalid.png", 1, x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2));
 				sprite->Rotation = 0;
@@ -256,6 +257,14 @@ void PlayScene::OnKeyDown(int keyCode) {
 	IScene::OnKeyDown(keyCode);
 	if (keyCode == ALLEGRO_KEY_TAB) {
 		DebugMode = !DebugMode;
+		if (DebugMode){
+			EarnMoney(10000);
+			const Engine::Point SpawnCoordinate = Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2, SpawnGridPoint.y * BlockSize + BlockSize / 2);
+			Enemy* enemy;
+			EnemyGroup->AddNewObject(enemy = new PlaneEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+			enemy->UpdatePath(mapDistance);
+		}
+
 	}
 	else {
 		keyStrokes.push_back(keyCode);
@@ -295,7 +304,7 @@ void PlayScene::Hit() {
 	lives--;
 	UILives->Text = std::string("Life ") + std::to_string(lives);
 	if (lives <= 0) {
-		Engine::GameEngine::GetInstance().ChangeScene("lose-scene");
+		Engine::GameEngine::GetInstance().ChangeScene("lose");
 	}
 }
 int PlayScene::GetMoney() const {
